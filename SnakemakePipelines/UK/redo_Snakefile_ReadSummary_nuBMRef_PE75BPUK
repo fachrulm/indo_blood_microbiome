@@ -1,0 +1,62 @@
+configfile: "ControlTB_IDs_all.yaml"
+
+sample=config["samples"]
+
+# create folder for cluster use
+onstart:
+    print("##### Creating profile pipeline #####\n")
+    print("\t Creating jobs output folder...\n")
+    shell("mkdir -p jobs/")
+    shell("mkdir -p logs/")
+    shell("mkdir -p /scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC")
+    shell("mkdir -p /scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary")
+    shell("mkdir -p /scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary/nuBMRef")
+
+rule all:
+	input:
+		expand("/scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary/{sample}_raw.txt", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary/{sample}_trimmed.txt", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary/{sample}_unmapped.txt", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary/{sample}_humanContaminant.txt", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary/{sample}_noRepeats.txt", sample=config["samples"])
+
+rule rawReads:
+	input:
+		"/scratch/punim0586/kat/ControlSamples_TB/{sample}/{sample}_1.fastq.gz"
+	output:
+		"/scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary/{sample}_raw.txt"
+	shell:
+		"echo {wildcards.sample} rawReads `expr $(zcat {input} |wc -l)/4|bc` > {output}"
+
+rule trimmedReads:
+	input:
+		"/scratch/punim0586/fachrulm/UK_micro/75BP/{sample}_1.fastq.gz"
+	output:
+		"/scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary/{sample}_trimmed.txt"
+	shell:
+		"echo {wildcards.sample} trimmedReads `expr $(zcat {input} |wc -l)/4|bc` > {output}"
+
+rule unmappedReads:
+	input:
+		"/scratch/punim0586/fachrulm/UK_micro/75BP/2mapped/{sample}_Unmapped.out.mate1"
+	output:
+		"/scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary/{sample}_unmapped.txt"
+	shell:
+		"echo {wildcards.sample} unmappedReads `expr $(cat {input} |wc -l)/4|bc` > {output}"
+
+rule humanContaminantReads:
+	input:
+		"/scratch/punim0586/fachrulm/UK_micro/75BP/PE/KneadData/{sample}_1_kneaddata_paired_GRCh38_dna_primary_assembly_bmtagger_contam_1.fastq"
+	output:
+		"/scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary/{sample}_humanContaminant.txt"
+	shell:
+		"echo {wildcards.sample} HumanContaminantReads `expr $(cat {input} |wc -l)/4|bc` > {output}"
+
+rule noRepeats:
+	input:
+		"/scratch/punim0586/fachrulm/UK_micro/75BP/PE/KneadData/{sample}_1_kneaddata.repeats.removed.1.fastq"
+	output:
+		"/scratch/punim0586/fachrulm/UK_micro/75BP/PE/QC/ReadSummary/{sample}_noRepeats.txt"
+	shell:
+		"echo {wildcards.sample} noRepeats `expr $(cat {input} |wc -l)/4|bc` > {output}"
+

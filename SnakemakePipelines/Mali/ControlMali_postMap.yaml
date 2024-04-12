@@ -1,0 +1,64 @@
+samples:
+        - SRR1026870
+        - SRR1026873
+        - SRR1026875
+        - SRR1026879
+        - SRR1026881
+        - SRR1026885
+        - SRR1026889
+        - SRR1026891
+        - SRR1026895
+        - SRR1026898
+        - SRR1026900
+        - SRR1026902
+        - SRR1026906
+        - SRR1026910
+        - SRR1026914
+        - SRR1026918
+        - SRR1026922
+        - SRR1026924
+        - SRR1026926
+        - SRR1026928
+        - SRR1026930
+        - SRR1026932
+        - SRR1026936
+        - SRR1026940
+        - SRR1026942
+        - SRR1026944
+        - SRR1026946
+        - SRR1026948
+        - SRR1026950
+        - SRR1026952
+        - SRR1026954
+        - SRR1026956
+        - SRR1026958
+        - SRR1026960
+        - SRR1026962
+        - SRR1026964
+        - SRR1026968
+        - SRR1026970
+        - SRR1026974
+        - SRR1026978
+        - SRR1026980
+        - SRR1026982
+        - SRR1026986
+        - SRR1026988
+        - SRR1026990
+        - SRR1026992
+        - SRR1026994
+        - SRR1026996
+        - SRR1027000
+        - SRR1027002
+        - SRR1027004
+        - SRR1027006
+        - SRR1027008
+        - SRR1027010
+
+## Path to kma
+kma: /data/projects/punim0586/fachrulm/CCMetagen/kma
+
+## Path to CCMetagen
+CCMetagen: /data/projects/punim0586/fachrulm/CCMetagen/CCMetagen/CCMetagen.py
+
+## Path to correct python version
+python: /home/fachrulm/miniconda3/envs/RNA_mbiome/bin/python
