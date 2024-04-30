@@ -1,6 +1,6 @@
 # Introduction
-# This part of the study will analyse differences unmapped reads in our Indonesian samples. 
-# The aim of this analysis is therefore to see what pathogen can be identified in whole blood in our Indonesian samples and if it differs between islands.
+# This part of the study will analyze the taxa differences from the unmapped reads of our Indonesian dataset 
+# The aim of this analysis is to see what pathogens can be identified in whole blood of our Indonesian dataset and if they differ between islands.
 # We will test this by looking at sample clustering, relative abundance of taxa, differential abundance testing, and diversity estimates. 
 
 ## About the samples
