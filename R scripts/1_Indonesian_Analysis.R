@@ -12,36 +12,25 @@
 
 # Loading packages, directories, and colour setup ##########
 # Install the packages needed to run the analysis.
-require(ggplot2)
-require(RColorBrewer)
-library(dplyr)
-library(plyr)
-library(reshape2)
-library(ggpubr)
-library(metacoder)
-library(tidyverse)             
-library(phyloseq)                   
-library(DESeq2)                       
-library(microbiome)               
-library(vegan)                         
-library(picante)                     
-library(ALDEx2)                      
-library(metagenomeSeq)          
-library(HMP)                             
-library(dendextend)               
-library(selbal)                       
-library(rms)
-library(breakaway)        
-library(microbiomeutilities)
-library(mixOmics)
-library(SRS)
-library(ggrepel)
-library(DivNet)
-library(zCompositions)
-library(factoextra)
-library(compositions)
-library(patchwork)
-library(edgeR)
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+install.packages("pacman")
+library("pacman")
+install.packages("remotes")
+library("remotes")
+
+BiocManager::install(c("phyloseq", "DESeq2", "microbiome", "ALDEx2", "metagenomeSeq", "mixOmics"), lib="/Users/muhamad.fachrul/Library/R/arm64/4.4/library", force=TRUE)
+remotes::install_github("malucalle/selbal")
+remotes::install_github("microsud/microbiomeutilities")
+remotes::install_github("adw96/breakaway")
+remotes::install_github("adw96/DivNet")
+
+# Install / load CRAN packages using pacman
+p_load(ggplot2, RColorBrewer, dplyr, plyr, reshape2, ggpubr,
+       metacoder, tidyverse, phyloseq, DESeq2, microbiome, vegan,
+       picante, ALDEx2, metagenomeSeq, HMP, dendextend, selbal, rms,
+       breakaway, microbiomeutilities, mixOmics, SRS, ggrepel, DivNet,
+       zCompositions, factoextra, compositions, patchwork, edgeR)
 
 ## Set up directories
 refdir = "/Users/muhamad.fachrul/OneDrive - St Vincent's Institute/Projects/Blood microbiome Indo/reScratch/Indo_data/CCmetagen/"
@@ -287,6 +276,8 @@ ggplot(pcs_vase_plas) + geom_point(aes(x=Axis.3, y=Axis.4, color=Plasmodiidae, s
 
 ggplot(pcs_vase_plas) + geom_point(aes(x=Axis.5, y=Axis.6, color=Plasmodiidae, shape=SamplePop), alpha=0.8, size=4) + theme(plot.title = element_text(hjust = 0, size = 12)) + scale_colour_gradientn(colours = colorRampPalette(c("#FFCCBB","#A03F03"))(10), limits=c(1, 6))
 
+cor(pcs_vase_plas[,1:2], log10_plasm_counts, method = "pearson") #Correlation between PCs and load
+
 ### Plot by Flavivirus load
 log10_flav_counts <- log10(colSums(otu_table(AllREadsPE_Indo_Counts_physeq_noMeta)[grep("Flaviviridae",tax_table(AllREadsPE_Indo_Counts_physeq_noMeta)[,"Family"])])+1)
 
@@ -301,13 +292,19 @@ ggplot(pcs_vase_flav) + geom_point(aes(x=Axis.3, y=Axis.4, color=Flaviviridae, s
 
 ggplot(pcs_vase_flav) + geom_point(aes(x=Axis.5, y=Axis.6, color=Flaviviridae, shape=SamplePop), alpha=0.8, size=4) + theme(plot.title = element_text(hjust = 0, size = 12)) + scale_colour_gradientn(colours = colorRampPalette(c("#78c679","#006837"))(20), limits=c(1, 6))
 
+cor(pcs_vase_flav[,1:2], log10_flav_counts, method = "pearson") #Correlation between PCs and load
+
 ### Plot by batch
 ### We can also see this isn't caused by batch.
-plot_ordination(merged_phylo_counts_clr, ord, color="batch", axes = 1:2, label="SampleName") + scale_colour_manual(values=c("#cb54d6","#3d45c4","black")) + geom_point(aes(), alpha=0.6, size=4) + theme(plot.title = element_text(hjust = 0, size = 12))
-plot_ordination(merged_phylo_counts_clr, ord, color="batch", axes = 2:3, label="SampleName") + scale_colour_manual(values=c("#cb54d6","#3d45c4","black")) + geom_point(aes(), alpha=0.6, size=4) + theme(plot.title = element_text(hjust = 0, size = 12))
-plot_ordination(merged_phylo_counts_clr, ord, color="batch", axes = 3:4, label="SampleName") + scale_colour_manual(values=c("#cb54d6","#3d45c4","black")) + geom_point(aes(), alpha=0.6, size=4) + theme(plot.title = element_text(hjust = 0, size = 12))
-plot_ordination(merged_phylo_counts_clr, ord, color="batch", axes = 4:5, label="SampleName") + scale_colour_manual(values=c("#cb54d6","#3d45c4","black")) + geom_point(aes(), alpha=0.6, size=4) + theme(plot.title = element_text(hjust = 0, size = 12))
+#pdf(paste0("/Users/muhamad.fachrul/OneDrive - St Vincent's Institute/Projects/Blood microbiome Indo/reScratch/Indo_data/Indo 101BP_PE/PCA_batch.pdf"), width=8, height=8)
+ggplot(base_pca) + geom_point(aes(x=Axis.1, y=Axis.2, color=batch), alpha=1, size=4) + scale_colour_manual(values=c("#cb54d6","#3d45c4","black")) + theme(plot.title = element_text(hjust = 0, size = 12))
 
+ggplot(base_pca) + geom_point(aes(x=Axis.3, y=Axis.4, color=batch), alpha=1, size=4) + scale_colour_manual(values=c("#cb54d6","#3d45c4","black")) + theme(plot.title = element_text(hjust = 0, size = 12))
+
+ggplot(base_pca) + geom_point(aes(x=Axis.5, y=Axis.6, color=batch), alpha=1, size=4) + scale_colour_manual(values=c("#cb54d6","#3d45c4","black")) + theme(plot.title = element_text(hjust = 0, size = 12))
+#dev.off()
+
+cor(base_pca[,1:2], as.numeric(base_pca$batch), method = "spearman") #Correlation between PCs and batches
 
 ## Hierarchical clustering by Euclidean distance
 ps_otu <- data.frame(phyloseq::otu_table(merged_phylo_counts_clr))
