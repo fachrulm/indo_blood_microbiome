@@ -208,7 +208,21 @@ ggplot(melted_FilteringSummary, aes(x=variable, y=log(value))) +
 
 ## Most of the reads are removed when removing Chordates.
 
-# Data normalization ##########
+# Data normalization pop_comparison <- merged_phylo_counts_noUnk %>%
+tax_glom("Phylum")
+
+pop_comparison
+
+# change taxa names to reflect Phylum level
+taxa_names(pop_comparison) <- paste(tax_table(pop_comparison)[,"Superkingdom"], tax_table(pop_comparison)[,"Kingdom"], tax_table(pop_comparison)[,"Phylum"], sep="_")
+
+zComposition_estimate <- otu_table(pop_comparison) + 1
+zComposition_clr <- microbiome::transform(zComposition_estimate, "clr")
+
+# add in zCompositions information to new phyloseq object
+merged_phylo_counts_zComposition <- pop_comparison
+taxa_zComposition <- otu_table(zComposition_clr, taxa_are_rows = TRUE)
+otu_table(merged_phylo_counts_zComposition) <- taxa_zComposition
 ## Centered log-ration transformation
 ## Taxa can be viewed by their relative abundance, however changes in the abundance of one taxon will result in changing the abundance of other taxa.
 ## One of the ways to handle this is to transform the data using Centered Log Ratio (CLR) transformation. CLR data shows how OTUs behave relative to the per-sample average and is a commonly-used data transformation method in microbiomics.
@@ -451,7 +465,7 @@ patho_plt <- (Plas_PCs1_2 | Flav_PCs1_2) + plot_layout(guides = 'collect') & the
 #dev.off()
 
 # Differential abundance testing ##########
-# We're interested in testing whether the species composition between islands is significantly different.
+# We're interested in testing whether the taxa composition between islands is significantly different.
 # Aldex2 corrects for uneven library sizes, so rarefying is not necessary. The only input needed is the data with singletons removed.
 # Since Aldex2 works pairwise, the dataset is subsetted into groups of two. 
 
