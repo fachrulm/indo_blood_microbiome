@@ -1,0 +1,22 @@
+samples:
+        - SRR6369897
+        - SRR6369900
+        - SRR6369902
+        - SRR6369904
+        - SRR6369918
+        - SRR6369920
+        - SRR6369927
+        - SRR6369928
+        - SRR6369883
+        - SRR6369884
+        - SRR6369930
+        - SRR6369931
+
+## Path to kma
+kma: /data/projects/punim0586/fachrulm/CCMetagen/kma
+
+## Path to CCMetagen
+CCMetagen: /data/projects/punim0586/fachrulm/CCMetagen/CCMetagen/CCMetagen.py
+
+## Path to correct python version
+python: /home/fachrulm/miniconda3/envs/RNA_mbiome/bin/python

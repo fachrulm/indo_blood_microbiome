@@ -1,0 +1,146 @@
+configfile: "ControlMali_IDs.yaml"
+
+sample=config["samples"]
+
+# create folder for cluster use
+onstart:
+    print("##### Creating profile pipeline #####\n") 
+    print("\t Creating jobs output folder...\n")
+    shell("mkdir -p jobs/")
+    shell("mkdir -p /scratch/punim0586/fachrulm/Mali_micro/75BP")
+    shell("mkdir -p /scratch/punim0586/fachrulm/Mali_micro/75BP/qc/fastqc")
+    shell("mkdir -p /scratch/punim0586/fachrulm/STAR_index/75bp")
+    shell("mkdir -p /scratch/punim0586/fachrulm/Mali_micro/75BP/1mapped")
+    shell("mkdir -p /scratch/punim0586/fachrulm/Mali_micro/75BP/2mapped")
+
+
+rule all:
+	input:
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_1.fastq.gz", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_2.fastq.gz", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_1.unpaired.fastq.gz", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_2.unpaired.fastq.gz", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/qc/fastqc/{sample}_1_fastqc.html", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/qc/fastqc/{sample}_2_fastqc.html", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/qc/fastqc/{sample}_1_fastqc.zip", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/qc/fastqc/{sample}_2_fastqc.zip", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/1mapped/{sample}_Aligned.sortedByCoord.out.bam", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/2mapped/{sample}_Aligned.sortedByCoord.out.bam", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/2mapped/{sample}_Unmapped.out.mate1", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/2mapped/{sample}_Unmapped.out.mate2", sample=config["samples"]),
+		expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/1mapped/{sample}_SJ.out.tab", sample=config["samples"]),
+		indexDone = "/scratch/punim0586/fachrulm/STAR_index/75bp/genomeParameters.txt"
+	output: touch("all.done")
+
+rule trimmomatic_pe_75:
+	input:
+		r1="/scratch/punim0586/kat/ControlSamples_Mali/{sample}/{sample}_1.fastq.gz",
+		r2="/scratch/punim0586/kat/ControlSamples_Mali/{sample}/{sample}_2.fastq.gz"
+	output:
+		r1="/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_1.fastq.gz",
+		r2="/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_2.fastq.gz",
+		# reads where trimming entirely removed the mate
+		r1_unpaired="/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_1.unpaired.fastq.gz",
+		r2_unpaired="/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_2.unpaired.fastq.gz"
+	log:
+		"logs/75bp_trim_{sample}.log"
+	threads: 12
+	shell:
+                "trimmomatic PE -threads {threads} -phred33 {input.r1} {input.r2} {output.r1} {output.r1_unpaired} {output.r2} {output.r2_unpaired} CROP:75 LEADING:20 TRAILING:20 MINLEN:65 ILLUMINACLIP:/data/cephfs/punim0586/kbobowik/bin/Trimmomatic-0.36/adapters/TruSeq3-PE.fa:2:30:10:2:keepBothReads"
+
+
+rule fastqc_75:
+	input:
+		["/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_1.fastq.gz", "/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_2.fastq.gz"]
+	output:
+		"/scratch/punim0586/fachrulm/Mali_micro/75BP/qc/fastqc/{sample}_1_fastqc.html",
+		"/scratch/punim0586/fachrulm/Mali_micro/75BP/qc/fastqc/{sample}_2_fastqc.html",
+		"/scratch/punim0586/fachrulm/Mali_micro/75BP/qc/fastqc/{sample}_1_fastqc.zip",
+		"/scratch/punim0586/fachrulm/Mali_micro/75BP/qc/fastqc/{sample}_2_fastqc.zip"
+	log:
+		"logs/75bp_fqc_{sample}.log"
+	threads: 12
+	shell:
+		"""
+                fastqc {input} -t {threads} --extract --outdir=/scratch/punim0586/fachrulm/Mali_micro/75BP/qc/fastqc/ &> {log}
+                """
+
+rule star_index_75:
+	input:
+		fasta="/data/cephfs/punim0586/shared/genomes/hg38/Homo_sapiens.GRCh38.p10.ensemblv90.dna.primary_assembly.fa",
+		gtf="/data/cephfs/punim0586/shared/genomes/hg38/GTF_annotation/Homo_sapiens.GRCh38.90.gtf"
+	output:
+		indexDone="/scratch/punim0586/fachrulm/STAR_index/75bp/genomeParameters.txt"
+	threads: 12
+	resources:
+                mem_mb=100000
+	shell:
+		"""
+                STAR --runMode genomeGenerate --genomeDir /scratch/punim0586/fachrulm/STAR_index/75bp \
+			--genomeFastaFiles {input.fasta} --sjdbGTFfile {input.gtf} \
+			--sjdbOverhang 74 --runThreadN {threads} 
+                """
+
+rule star_pe_onepass_75:
+	input:
+		f1="/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_1.fastq.gz",
+		f2="/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_2.fastq.gz",
+		dir="/scratch/punim0586/fachrulm/STAR_index/75bp"
+
+	output:
+		"/scratch/punim0586/fachrulm/Mali_micro/75BP/1mapped/{sample}_Aligned.sortedByCoord.out.bam",
+		"/scratch/punim0586/fachrulm/Mali_micro/75BP/1mapped/{sample}_SJ.out.tab"
+
+	log:
+		"/scratch/punim0586/fachrulm/Mali_micro/75BP/1mapped/{sample}.log"
+	
+	resources:
+		mem_mb=100000
+
+	threads: 12
+
+	log:
+		"logs/75bp_1map_{sample}.log"
+
+	shell:
+                """		
+		sh scripts/75bp_1pass_STAR.sh {input.f1} {input.f2} {input.dir} {threads} {log}
+                """
+
+# Get all splice junction files from first-pass mapping before second-pass
+rule getSJs_75:
+    input:
+        expand("/scratch/punim0586/fachrulm/Mali_micro/75BP/1mapped/{sample}_SJ.out.tab", sample=config["samples"])
+
+    output:
+        sj_list = "/scratch/punim0586/fachrulm/Mali_micro/75BP/1mapped/pass1_sj.list"
+
+    shell:
+        """
+        echo "{input}" > {output.sj_list}
+        """
+
+rule star_pe_twopass_75:
+	input:
+		f1="/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_1.fastq.gz",
+                f2="/scratch/punim0586/fachrulm/Mali_micro/75BP/{sample}_2.fastq.gz",
+		dir="/scratch/punim0586/fachrulm/STAR_index/75bp",
+		sj_list = rules.getSJs_75.output.sj_list
+
+	output:
+		"/scratch/punim0586/fachrulm/Mali_micro/75BP/2mapped/{sample}_Aligned.sortedByCoord.out.bam",
+		"/scratch/punim0586/fachrulm/Mali_micro/75BP/2mapped/{sample}_Unmapped.out.mate1",
+		"/scratch/punim0586/fachrulm/Mali_micro/75BP/2mapped/{sample}_Unmapped.out.mate2"
+
+	log:
+		"logs/75bp_2map_{sample}.log"	
+
+	threads: 12
+
+	resources:
+                mem_mb=100000
+
+	shell:
+		"""
+		sh scripts/75bp_2pass_STAR.sh {input.f1} {input.f2} {input.dir} {threads} {log} {input.sj_list}
+		"""
